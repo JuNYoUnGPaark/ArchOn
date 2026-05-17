@@ -1,0 +1,53 @@
+EMG 센서 입력
+Pressure 센서 입력
+        ↓
+Raspberry Pi
+        ↓
+전처리
+- EMG: bandpass / notch / rectification
+- Pressure: smoothing / baseline 보정
+        ↓
+window 단위 feature 계산
+- EMG RMS, MAV, ratio
+- Pressure total pressure, sensor별 ratio
+        ↓
+상태 판단
+- underactive / good / overactive
+- underload / good / overload
+        ↓
+피드백 출력
+        ↓
+CSV 또는 SQLite로 log 저장
+        ↓
+나중에 병원 제공용 report 생성
+
+------------------------------------------------------------------------
+1단계: dummy data로 EMG + Pressure 통합 코드 테스트
+→ 완료
+
+2단계: 실제 압력센서 값 읽기
+→ 센서 종류에 따라 다름
+→ ADC 모듈 필요할 수 있음 (있음)
+
+3단계: 실제 EMG 센서 값 읽기
+→ 아날로그 EMG면 ADC 필요 (있음)
+→ 모듈 출력이 serial/Bluetooth면 더 쉬움
+
+4단계: 라즈베리에서 실시간 분석 + CSV 저장
+→ 쉬움
+
+5단계: UI 만들기
+→ 가능함
+→ Streamlit으로 만들면 가장 쉬움
+
+------------------------------------------------------------------------
+입력:
+- EMG 1채널
+- Pressure sensor N개
+
+출력:
+- 근활성 상태
+- 압력 상태
+- 실시간 피드백
+- CSV 로그 저장
+- 치료 전/후 비교용 summary
