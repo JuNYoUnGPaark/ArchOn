@@ -24,10 +24,10 @@ def init_sensors():
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c, address=0x48)
 
-        fsr_a = AnalogIn(ads, ADS.P0)
-        fsr_b = AnalogIn(ads, ADS.P1)
-        fsr_c = AnalogIn(ads, ADS.P2)
-        emg   = AnalogIn(ads, ADS.P3)
+        fsr_a = AnalogIn(ads, 0)
+        fsr_b = AnalogIn(ads, 1)
+        fsr_c = AnalogIn(ads, 2)
+        emg   = AnalogIn(ads, 3)
 
         print("ADS1115 initialized (I2C address: 0x48)")
         print(f"Channel mapping: A0=FSR | A1=FSR | A2=FSR | A3=EMG")
