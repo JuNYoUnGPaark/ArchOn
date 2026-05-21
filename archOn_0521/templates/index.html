@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Arch-On Realtime Monitor</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: auto;
+        }
+
+        .buttons {
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .start {
+            background: #22c55e;
+            color: white;
+        }
+
+        .stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 16px;
+            border-radius: 14px;
+        }
+
+        .label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .emg-card {
+            background: #312e81;
+        }
+
+        .feedback {
+            background: #2563eb;
+            padding: 20px;
+            border-radius: 14px;
+            font-size: 22px;
+            margin: 20px 0;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 14px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .saved {
+            color: #22c55e;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>Arch-On Realtime Monitor</h1>
+    <p>FSR 1~18 + EMG 실시간 피드백 시스템</p>
+
+    <div class="buttons">
+        <button class="start" onclick="startMonitoring()">Start</button>
+        <button class="stop" onclick="stopMonitoring()">Stop & Save</button>
+    </div>
+
+    <div id="fsrCards" class="cards"></div>
+
+    <div class="card emg-card">
+        <div class="label">EMG</div>
+        <div class="value" id="emg">-</div>
+    </div>
+
+    <div class="feedback" id="feedback">
+        대기 중입니다.
+    </div>
+
+    <canvas id="chart" height="120"></canvas>
+
+    <div class="saved" id="saved"></div>
+</div>
+
+<script>
+    const socket = io();
+
+    const fsrCount = 18;
+
+    const labels = [];
+    const fsrData = {};
+    const emgData = [];
+
+    const fsrCards = document.getElementById("fsrCards");
+
+    for (let i = 1; i <= fsrCount; i++) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <div class="label">FSR${i}</div>
+            <div class="value" id="fsr${i}">-</div>
+        `;
+        fsrCards.appendChild(card);
+        fsrData[`fsr${i}`] = [];
+    }
+
+    const datasets = [];
+
+    for (let i = 1; i <= fsrCount; i++) {
+        datasets.push({
+            label: `FSR${i}`,
+            data: fsrData[`fsr${i}`],
+            borderWidth: 1,
+            tension: 0.25,
+            hidden: i > 6
+        });
+    }
+
+    datasets.push({
+        label: "EMG",
+        data: emgData,
+        borderWidth: 2,
+        tension: 0.25
+    });
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            animation: false,
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        boxWidth: 14,
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: "Voltage"
+                    }
+                }
+            }
+        }
+    });
+
+    function startMonitoring() {
+        socket.emit("start");
+        document.getElementById("saved").innerText = "";
+    }
+
+    function stopMonitoring() {
+        socket.emit("stop");
+    }
+
+    socket.on("sensor_data", function(data) {
+        labels.push(data.time);
+
+        for (let i = 1; i <= fsrCount; i++) {
+            const key = `fsr${i}_voltage`;
+            const value = data[key];
+
+            if (value !== null && value !== undefined) {
+                document.getElementById(`fsr${i}`).innerText = value.toFixed(3) + "V";
+                fsrData[`fsr${i}`].push(value);
+            } else {
+                document.getElementById(`fsr${i}`).innerText = "-";
+                fsrData[`fsr${i}`].push(null);
+            }
+        }
+
+        if (data.emg_voltage !== null && data.emg_voltage !== undefined) {
+            document.getElementById("emg").innerText = data.emg_voltage.toFixed(3) + "V";
+            emgData.push(data.emg_voltage);
+        } else {
+            document.getElementById("emg").innerText = "-";
+            emgData.push(null);
+        }
+
+        document.getElementById("feedback").innerText = data.feedback;
+
+        if (labels.length > 60) {
+            labels.shift();
+
+            for (let i = 1; i <= fsrCount; i++) {
+                fsrData[`fsr${i}`].shift();
+            }
+
+            emgData.shift();
+        }
+
+        chart.update();
+    });
+
+    socket.on("saved", function(data) {
+        document.getElementById("saved").innerText = "Saved: " + data.filename;
+    });
+</script>
+</body>
+</html>
