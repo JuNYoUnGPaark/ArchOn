@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Arch-On Monitor</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg: #f6f8fb;
+            --card: #ffffff;
+            --text: #191f28;
+            --muted: #6b7684;
+            --line: #edf1f5;
+            --blue: #3182f6;
+            --blue-dark: #1b64da;
+            --green: #12b886;
+            --orange: #f59f00;
+            --red: #fa5252;
+            --shadow: 0 10px 28px rgba(20, 32, 54, 0.06);
+        }
+
+        body {
+            margin: 0;
+            padding: 28px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: auto;
+        }
+
+        .header {
+            margin-bottom: 22px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .comment-box {
+            background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+            color: white;
+            border-radius: 30px;
+            padding: 36px;
+            min-height: 150px;
+            box-shadow: 0 18px 42px rgba(49, 130, 246, 0.23);
+            margin-bottom: 24px;
+        }
+
+        .comment-label {
+            font-size: 15px;
+            opacity: 0.86;
+            margin-bottom: 10px;
+            font-weight: 650;
+        }
+
+        .comment-main {
+            font-size: 36px;
+            font-weight: 850;
+            line-height: 1.35;
+            word-break: keep-all;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 26px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
+        }
+
+        .panel-title {
+            margin: 0 0 18px 0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.035em;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            border: none;
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 750;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.98);
+        }
+
+        .primary { background: var(--blue); color: white; }
+        .secondary { background: #e8f2ff; color: var(--blue-dark); }
+        .dark { background: #191f28; color: white; }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 18px;
+        }
+
+        .metric-title {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 23px;
+            font-weight: 850;
+            min-height: 32px;
+        }
+
+        .metric-sub {
+            color: #8b95a1;
+            font-size: 13px;
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .group-card {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .group-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .group-name {
+            font-size: 14px;
+            color: var(--muted);
+            font-weight: 750;
+        }
+
+        .group-value {
+            font-size: 20px;
+            font-weight: 850;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #edf1f5;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--blue);
+            border-radius: 99px;
+            transition: width 0.18s ease;
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 22px;
+            align-items: stretch;
+        }
+
+        .surface-box {
+            min-height: 470px;
+        }
+
+        #surface3d {
+            width: 100%;
+            height: 405px;
+            border-radius: 22px;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .foot-box {
+            min-height: 470px;
+        }
+
+        #footMap {
+            background: #f8fafc;
+            border-radius: 22px;
+            width: 100%;
+            height: 390px;
+        }
+
+        .summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-item {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+            line-height: 1.55;
+        }
+
+        .status-good { color: var(--green); font-weight: 800; }
+        .status-normal { color: var(--orange); font-weight: 800; }
+        .status-bad { color: var(--red); font-weight: 800; }
+
+        .line-panel {
+            margin-top: 22px;
+        }
+
+        .line-chart-wrap {
+            height: 340px;
+        }
+
+        #chart {
+            max-height: 310px;
+        }
+
+        .legend-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px 2px 2px;
+            margin-top: 8px;
+            scrollbar-width: thin;
+        }
+
+        .legend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: #f8fafc;
+            color: #4e5968;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .legend-chip.off {
+            opacity: 0.42;
+            text-decoration: line-through;
+        }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--blue);
+        }
+
+        @media (max-width: 980px) {
+            .grid-4, .group-grid, .viz-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comment-main {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>Arch-On Monitor</h1>
+    </div>
+
+    <section class="comment-box">
+        <div class="comment-label">현재 상태 / 코멘트</div>
+        <div class="comment-main" id="feedback">
+            시작 버튼을 눌러 시스템 검사를 진행하세요.
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="button-row">
+            <button class="primary" id="mainButton" onclick="primaryAction()">시작</button>
+            <button class="dark" onclick="finishSession()">전체 종료 및 요약</button>
+            <button class="secondary" onclick="openDataFolder()">데이터 파일 열기</button>
+        </div>
+
+        <div class="grid-4">
+            <div class="metric-card">
+                <div class="metric-title">기준값</div>
+                <div class="metric-value" id="baselineValue">-</div>
+                <div class="metric-sub">10초 평균 기준 압력 / EMG</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">최대값</div>
+                <div class="metric-value" id="maxValue">-</div>
+                <div class="metric-sub">상위 5% 평균 기반 최대값</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">현재 단계</div>
+                <div class="metric-value" id="phaseStatus">시작</div>
+                <div class="metric-sub">검사 → 기준값 → 최대값 → 운동</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">저장 상태</div>
+                <div class="metric-value" id="saveStatus">-</div>
+                <div class="metric-sub">data 폴더에 세션별 저장</div>
+            </div>
+        </div>
+
+        <div class="group-grid">
+            <div class="group-card">
+                <div class="group-top">
+                    <span class="group-name">Front</span>
+                    <span class="group-value" id="frontValue">-</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill" id="frontBar"></div></div>
+            </div>
+
+            <div class="group-card">
+                <div class="group-top">
+                    <span class="group-name">Middle/Arch</span>
+                    <span class="group-value" id="middleValue">-</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill" id="middleBar"></div></div>
+            </div>
+
+            <div class="group-card">
+                <div class="group-top">
+                    <span class="group-name">Rear/Heel</span>
+                    <span class="group-value" id="rearValue">-</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill" id="rearBar"></div></div>
+            </div>
+
+            <div class="group-card">
+                <div class="group-top">
+                    <span class="group-name">EMG</span>
+                    <span class="group-value" id="emgValue">-</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill" id="emgBar"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="viz-grid">
+        <section class="panel surface-box">
+            <h3 class="panel-title">3D Pressure Surface</h3>
+            <div id="surface3d"></div>
+        </section>
+
+        <section class="panel foot-box">
+            <h3 class="panel-title">Foot Pressure Map</h3>
+            <canvas id="footMap" width="260" height="390"></canvas>
+        </section>
+    </div>
+
+    <section class="panel">
+        <h3 class="panel-title">운동별 요약</h3>
+        <div class="summary-list" id="summaryList">
+            <div class="summary-item">아직 운동 결과가 없습니다.</div>
+        </div>
+    </section>
+
+    <section class="panel line-panel">
+        <h3 class="panel-title">Raw Sensor Line Plot</h3>
+        <div class="line-chart-wrap">
+            <canvas id="chart"></canvas>
+        </div>
+        <div id="customLegend" class="legend-scroll"></div>
+    </section>
+
+</div>
+
+<script>
+    const socket = io();
+
+    const fsrCount = 18;
+
+    const sensorGroups = {
+        front: [1, 2, 3, 4, 5, 6],
+        middleArch: [7, 8, 9, 10, 11, 12],
+        rearHeel: [13, 14, 15, 16, 17, 18]
+    };
+
+    const surfaceGrid = {
+        frontLeft: [1, 4],
+        frontCenter: [2, 5],
+        frontRight: [3, 6],
+        midLeft: [7, 10],
+        midCenter: [8, 11],
+        midRight: [9, 12],
+        rearLeft: [13, 16],
+        rearCenter: [14, 17],
+        rearRight: [15, 18]
+    };
+
+    const labels = [];
+    const fsrData = {};
+    const emgData = [];
+    const frontData = [];
+    const middleArchData = [];
+    const rearHeelData = [];
+
+    for (let i = 1; i <= fsrCount; i++) {
+        fsrData[`fsr${i}`] = [];
+    }
+
+    const datasets = [];
+
+    for (let i = 1; i <= fsrCount; i++) {
+        datasets.push({
+            label: `FSR${i}`,
+            data: fsrData[`fsr${i}`],
+            borderWidth: 1,
+            pointRadius: 0,
+            tension: 0.25,
+            hidden: i > 6
+        });
+    }
+
+    datasets.push(
+        { label: "Front avg", data: frontData, borderWidth: 3, pointRadius: 0, tension: 0.25 },
+        { label: "Middle/Arch avg", data: middleArchData, borderWidth: 3, pointRadius: 0, tension: 0.25 },
+        { label: "Rear/Heel avg", data: rearHeelData, borderWidth: 3, pointRadius: 0, tension: 0.25 },
+        { label: "EMG", data: emgData, borderWidth: 3, pointRadius: 0, tension: 0.25 }
+    );
+
+    const chart = new Chart(document.getElementById("chart").getContext("2d"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                legend: { display: false }
+            },
+            interaction: {
+                intersect: false,
+                mode: "index"
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: "Voltage" },
+                    grid: { color: "#edf1f5" }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    buildCustomLegend();
+
+    function primaryAction() {
+        socket.emit("primary_action");
+    }
+
+    function finishSession() {
+        socket.emit("end_summary");
+    }
+
+    function openDataFolder() {
+        window.open("/data", "_blank");
+    }
+
+    function setFeedback(text) {
+        document.getElementById("feedback").innerText = text;
+    }
+
+    function setPhase(text) {
+        document.getElementById("phaseStatus").innerText = text;
+    }
+
+    function setMainButton(text) {
+        document.getElementById("mainButton").innerText = text;
+    }
+
+    function pushLimited(arr, value) {
+        arr.push(value);
+        if (arr.length > 60) arr.shift();
+    }
+
+    function groupAverage(data, group) {
+        const values = group
+            .map(i => data[`fsr${i}_voltage`])
+            .filter(v => v !== null && v !== undefined && !Number.isNaN(Number(v)))
+            .map(Number);
+
+        if (values.length === 0) return null;
+
+        return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+    function surfaceGroupAverage(data, key) {
+        return groupAverage(data, surfaceGrid[key]);
+    }
+
+    function fmt(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
+        return Number(v).toFixed(2);
+    }
+
+    function pct(v) {
+        if (v === null || v === undefined || Number.isNaN(Number(v))) return 0;
+        return Math.max(0, Math.min(100, (Number(v) / 3.3) * 100));
+    }
+
+    function updateGroupCard(prefix, value) {
+        document.getElementById(`${prefix}Value`).innerText = fmt(value);
+        document.getElementById(`${prefix}Bar`).style.width = `${pct(value)}%`;
+    }
+
+    socket.on("sensor_data", function(data) {
+        pushLimited(labels, data.time || "");
+
+        for (let i = 1; i <= fsrCount; i++) {
+            pushLimited(fsrData[`fsr${i}`], data[`fsr${i}_voltage`] ?? null);
+        }
+
+        const front = groupAverage(data, sensorGroups.front);
+        const middle = groupAverage(data, sensorGroups.middleArch);
+        const rear = groupAverage(data, sensorGroups.rearHeel);
+        const emg = data.emg_voltage ?? null;
+
+        pushLimited(frontData, front);
+        pushLimited(middleArchData, middle);
+        pushLimited(rearHeelData, rear);
+        pushLimited(emgData, emg);
+
+        updateGroupCard("front", front);
+        updateGroupCard("middle", middle);
+        updateGroupCard("rear", rear);
+        updateGroupCard("emg", emg);
+
+        drawFootMap(data);
+        drawSurface3D(data);
+        chart.update();
+    });
+
+    socket.on("status", function(result) {
+        setFeedback(result.message);
+    });
+
+    socket.on("phase", function(result) {
+        setPhase(result.label);
+        setMainButton(result.label);
+    });
+
+    socket.on("system_check_result", function(result) {
+        if (result.ok) {
+            setFeedback("시스템 정상입니다. 기준값 측정을 진행하세요.");
+        } else {
+            setFeedback("센서 이상 감지: " + result.disconnected.join(", "));
+        }
+    });
+
+    socket.on("baseline_result", function(result) {
+        const fsrAvg = averageFromObject(result, "fsr");
+        const emg = result.emg_voltage;
+        document.getElementById("baselineValue").innerText =
+            `FSR ${fmt(fsrAvg)} / EMG ${fmt(emg)}`;
+        setFeedback("기준값 측정이 완료되었습니다. 최대값 측정을 진행하세요.");
+    });
+
+    socket.on("max_result", function(result) {
+        const fsrMax = averageFromObject(result, "fsr");
+        const emg = result.emg_voltage;
+        document.getElementById("maxValue").innerText =
+            `FSR ${fmt(fsrMax)} / EMG ${fmt(emg)}`;
+        setFeedback("최대값 측정이 완료되었습니다. 운동을 시작할 수 있습니다.");
+    });
+
+    socket.on("exercise_result", function(result) {
+        setFeedback(result.feedback.join(" "));
+
+        const box = document.createElement("div");
+        box.className = "summary-item";
+        box.innerHTML = `
+            <b>운동 ${result.exercise_index}회차</b><br>
+            상태: <span class="${stateClass(result.grade)}">${result.grade}</span> / ${result.score}점<br>
+            ${result.feedback.join("<br>")}
+        `;
+
+        const summary = document.getElementById("summaryList");
+
+        if (summary.innerText.includes("아직 운동 결과가 없습니다")) {
+            summary.innerHTML = "";
+        }
+
+        summary.appendChild(box);
+    });
+
+    socket.on("summary_result", function(result) {
+        setFeedback(
+            `전체 요약: 성공률 ${result.success_rate}% / 평균 ${result.avg_score}점 / 가장 많이 지적된 항목: ${result.most_common_issue}`
+        );
+        setPhase("세션 종료");
+
+        const summary = document.getElementById("summaryList");
+        const box = document.createElement("div");
+        box.className = "summary-item";
+        box.innerHTML = `
+            <b>전체 요약</b><br>
+            총 운동 수: ${result.total_exercises}<br>
+            성공률: ${result.success_rate}%<br>
+            평균 점수: ${result.avg_score}점<br>
+            가장 많이 지적된 항목: ${result.most_common_issue}<br>
+            ${result.comments ? result.comments.join("<br>") : ""}
+        `;
+        summary.appendChild(box);
+    });
+
+    socket.on("saved", function(result) {
+        document.getElementById("saveStatus").innerText = "저장됨";
+    });
+
+    function averageFromObject(obj, prefix) {
+        const vals = [];
+        for (let i = 1; i <= fsrCount; i++) {
+            const v = obj[`${prefix}${i}_voltage`];
+            if (v !== null && v !== undefined && !Number.isNaN(Number(v))) {
+                vals.push(Number(v));
+            }
+        }
+        if (vals.length === 0) return null;
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+
+    function stateClass(state) {
+        if (state === "good" || state === "best") return "status-good";
+        if (state === "normal") return "status-normal";
+        return "status-bad";
+    }
+
+    function drawFootMap(data) {
+        const canvas = document.getElementById("footMap");
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "#d6dee8";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(130, 195, 82, 160, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const positions = [
+            [95, 48], [130, 42], [165, 48],
+            [80, 98], [130, 96], [180, 98],
+            [75, 153], [130, 153], [185, 153],
+            [80, 210], [130, 210], [180, 210],
+            [88, 275], [130, 283], [172, 275],
+            [105, 338], [130, 346], [155, 338]
+        ];
+
+        for (let i = 1; i <= 18; i++) {
+            const value = data[`fsr${i}_voltage`];
+            const [x, y] = positions[i - 1];
+            const intensity = value !== null && value !== undefined ? Math.min(Number(value) / 3.3, 1.0) : 0;
+            const radius = 7 + intensity * 18;
+
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(49, 130, 246, ${0.16 + intensity * 0.84})`;
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#191f28";
+            ctx.font = "11px -apple-system, BlinkMacSystemFont, Segoe UI";
+            ctx.textAlign = "center";
+            ctx.fillText(i, x, y + 4);
+        }
+    }
+
+    function drawSurface3D(data) {
+        const z = [
+            [
+                surfaceGroupAverage(data, "frontLeft") ?? 0,
+                surfaceGroupAverage(data, "frontCenter") ?? 0,
+                surfaceGroupAverage(data, "frontRight") ?? 0
+            ],
+            [
+                surfaceGroupAverage(data, "midLeft") ?? 0,
+                surfaceGroupAverage(data, "midCenter") ?? 0,
+                surfaceGroupAverage(data, "midRight") ?? 0
+            ],
+            [
+                surfaceGroupAverage(data, "rearLeft") ?? 0,
+                surfaceGroupAverage(data, "rearCenter") ?? 0,
+                surfaceGroupAverage(data, "rearRight") ?? 0
+            ]
+        ];
+
+        const trace = {
+            z: z,
+            x: ["Left", "Center", "Right"],
+            y: ["Front", "Middle/Arch", "Rear/Heel"],
+            type: "surface",
+            contours: {
+                z: {
+                    show: true,
+                    usecolormap: true,
+                    highlightcolor: "#ffffff",
+                    project: { z: true }
+                }
+            },
+            showscale: true,
+            colorbar: {
+                title: "V",
+                thickness: 12,
+                len: 0.6
+            },
+            opacity: 0.96
+        };
+
+        const layout = {
+            margin: { l: 0, r: 0, t: 0, b: 0 },
+            paper_bgcolor: "#f8fafc",
+            plot_bgcolor: "#f8fafc",
+            scene: {
+                xaxis: { title: "", backgroundcolor: "#f8fafc", gridcolor: "#e5e8eb" },
+                yaxis: { title: "", backgroundcolor: "#f8fafc", gridcolor: "#e5e8eb" },
+                zaxis: { title: "Voltage", range: [0, 3.3], backgroundcolor: "#f8fafc", gridcolor: "#e5e8eb" },
+                camera: {
+                    eye: { x: 1.45, y: 1.45, z: 0.95 }
+                }
+            }
+        };
+
+        const config = {
+            displayModeBar: false,
+            responsive: true
+        };
+
+        Plotly.react("surface3d", [trace], layout, config);
+    }
+
+    function buildCustomLegend() {
+        const legend = document.getElementById("customLegend");
+        legend.innerHTML = "";
+
+        chart.data.datasets.forEach((dataset, index) => {
+            const item = document.createElement("div");
+            item.className = "legend-chip" + (dataset.hidden ? " off" : "");
+            item.innerHTML = `
+                <span class="legend-dot"></span>
+                <span>${dataset.label}</span>
+            `;
+
+            item.onclick = () => {
+                const meta = chart.getDatasetMeta(index);
+                meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+                chart.data.datasets[index].hidden = !chart.isDatasetVisible(index);
+                item.classList.toggle("off");
+                chart.update();
+            };
+
+            legend.appendChild(item);
+        });
+    }
+
+    drawSurface3D({});
+</script>
+</body>
+</html>
