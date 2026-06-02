@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Arch-On Monitor</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+*{box-sizing:border-box}:root{--bg:#f6f8fb;--card:#fff;--text:#191f28;--muted:#6b7684;--line:#edf1f5;--blue:#3182f6;--blue-dark:#1b64da;--green:#12b886;--orange:#f59f00;--red:#fa5252;--shadow:0 10px 28px rgba(20,32,54,.06)}
+body{margin:0;padding:28px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",sans-serif;background:var(--bg);color:var(--text);letter-spacing:-.02em}.container{max-width:1320px;margin:auto}.header{margin-bottom:22px}.header h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-.04em}.comment-box{background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:30px;padding:36px;min-height:150px;box-shadow:0 18px 42px rgba(49,130,246,.23);margin-bottom:24px}.comment-label{font-size:15px;opacity:.86;margin-bottom:10px;font-weight:650}.comment-main{font-size:34px;font-weight:850;line-height:1.35;word-break:keep-all}.panel{background:var(--card);border-radius:26px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px}.panel-title{margin:0 0 18px 0;font-size:20px;font-weight:800;letter-spacing:-.035em}.button-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}button{border:none;border-radius:16px;padding:14px 20px;font-size:15px;font-weight:750;cursor:pointer;transition:.15s ease}button:hover{transform:translateY(-1px);filter:brightness(.98)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}.primary{background:var(--blue);color:white}.secondary{background:#e8f2ff;color:var(--blue-dark)}.dark{background:#191f28;color:white}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.metric-card,.group-card,.summary-item{background:#f8fafc;border:1px solid var(--line);border-radius:22px;padding:18px}.metric-title,.group-name{color:var(--muted);font-size:14px;font-weight:700;margin-bottom:8px}.metric-value{font-size:22px;font-weight:850;min-height:32px}.metric-sub{color:#8b95a1;font-size:13px;margin-top:6px;line-height:1.35}.group-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}.group-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.group-value{font-size:20px;font-weight:850}.bar-bg{width:100%;height:10px;background:#edf1f5;border-radius:99px;overflow:hidden}.bar-fill{height:100%;width:0%;background:var(--blue);border-radius:99px;transition:width .18s ease}.viz-grid{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:stretch}#surface3d{width:100%;height:405px;border-radius:22px;overflow:hidden;background:#f8fafc}#footMap{background:#f8fafc;border-radius:22px;width:100%;height:390px}.summary-list{display:flex;flex-direction:column;gap:12px}.summary-item{line-height:1.55}.status-Good{color:var(--green);font-weight:800}.status-Normal{color:var(--orange);font-weight:800}.status-Bad{color:var(--red);font-weight:800}.chart-grid{display:grid;grid-template-columns:1fr;gap:18px}.line-chart-wrap{height:300px}.legend-scroll{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;margin-top:8px;scrollbar-width:thin}.legend-chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;color:#4e5968;font-size:12px;font-weight:700;cursor:pointer;user-select:none}.legend-chip.off{opacity:.42;text-decoration:line-through}.legend-dot{width:9px;height:9px;border-radius:50%;background:var(--blue)}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.36);display:none;align-items:center;justify-content:center;z-index:10}.modal{width:min(480px,calc(100% - 40px));background:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.2)}.modal h2{margin:0 0 12px;font-size:24px}.modal p{color:#4e5968;line-height:1.5}.modal .primary{width:100%;margin-top:12px}.ring-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:12px}.ring-card{background:#f8fafc;border:1px solid var(--line);border-radius:22px;padding:18px;text-align:center}.ring{width:96px;height:96px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:850;background:conic-gradient(var(--blue) 0deg,#edf1f5 0deg);box-shadow:inset 0 0 0 10px #fff}.ring-label{font-size:14px;font-weight:750;color:var(--muted)}.score-detail{margin-top:8px;font-size:12px;color:#8b95a1;line-height:1.45}.exercise-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 8px 20px rgba(20,32,54,.04)}.exercise-card-title{font-size:18px;font-weight:850;margin-bottom:8px}.good-text{color:var(--green);font-weight:800}.improve-text{color:var(--orange);font-weight:800}.method-modal{width:min(820px,calc(100% - 40px));max-height:86vh;overflow:auto}.method-content{color:#4e5968;line-height:1.65;font-size:14px}.method-content h3{color:#191f28;margin:18px 0 6px;font-size:17px}.method-content ul{margin:6px 0 12px 20px;padding:0}.method-content li{margin:4px 0}@media(max-width:980px){.grid-4,.group-grid,.viz-grid{grid-template-columns:1fr}.ring-grid{grid-template-columns:1fr 1fr}.comment-main{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header"><h1>Arch-On Monitor</h1></div>
+<section class="comment-box"><div class="comment-label">현재 상태 / 코멘트</div><div class="comment-main" id="feedback">기준값 측정을 누르면 센서 점검 후 기준값을 측정합니다.</div></section>
+<section class="panel">
+<div class="button-row"><button class="primary" id="mainButton" onclick="primaryAction()">기준값 측정</button><button class="dark" id="finishButton" onclick="finishSession()">전체 운동 종료</button><button class="secondary" onclick="openDataFolder()">데이터 파일 열기</button><button class="secondary" onclick="showMethodModal()">운동 평가 방법</button></div>
+<div class="grid-4">
+<div class="metric-card"><div class="metric-title">기준값</div><div class="metric-value" id="baselineValue">-</div><div class="metric-sub">5초 평균 압력 + EMG</div></div>
+<div class="metric-card"><div class="metric-title">최대 아치 형성</div><div class="metric-value" id="maxLiftValue">-</div><div class="metric-sub">엄지 압력 감소율 / 뒤꿈치 안정성</div></div>
+<div class="metric-card"><div class="metric-title">MVIC</div><div class="metric-value" id="mvicValue">-</div><div class="metric-sub">3초 × 3회, CV 60% 이하 통과</div></div>
+<div class="metric-card"><div class="metric-title">현재 단계</div><div class="metric-value" id="phaseStatus">기준값 측정</div><div class="metric-sub">전체 종료 후 즉시 새 세션 가능</div></div>
+</div>
+<div class="group-grid">
+<div class="group-card"><div class="group-top"><span class="group-name">Toe</span><span class="group-value" id="toeValue">-</span></div><div class="bar-bg"><div class="bar-fill" id="toeBar"></div></div></div>
+<div class="group-card"><div class="group-top"><span class="group-name">Arch</span><span class="group-value" id="archValue">-</span></div><div class="bar-bg"><div class="bar-fill" id="archBar"></div></div></div>
+<div class="group-card"><div class="group-top"><span class="group-name">Heel</span><span class="group-value" id="heelValue">-</span></div><div class="bar-bg"><div class="bar-fill" id="heelBar"></div></div></div>
+<div class="group-card"><div class="group-top"><span class="group-name">EMG</span><span class="group-value" id="emgValue">-</span></div><div class="bar-bg"><div class="bar-fill" id="emgBar"></div></div></div>
+</div>
+</section>
+<div class="viz-grid"><section class="panel"><h3 class="panel-title">3D Pressure Surface</h3><div id="surface3d"></div></section><section class="panel"><h3 class="panel-title">Foot Pressure Map</h3><canvas id="footMap" width="260" height="390"></canvas></section></div>
+<section class="panel">
+<h3 class="panel-title">실시간/최근 운동 평가 게이지</h3>
+<div class="ring-grid">
+<div class="ring-card"><div class="ring" id="ringArch">0%</div><div class="ring-label">아치 유지율</div></div>
+<div class="ring-card"><div class="ring" id="ringToe">0%</div><div class="ring-label">엄지 과보상 억제</div></div>
+<div class="ring-card"><div class="ring" id="ringHeel">0%</div><div class="ring-label">뒤꿈치 안정성</div></div>
+<div class="ring-card"><div class="ring" id="ringEmg">0%</div><div class="ring-label">EMG 활성도</div></div>
+</div>
+<div class="score-detail" id="latestScoreDetail">운동 종료 후 가중치 기반 계산식이 여기에 표시됩니다.</div>
+</section>
+<section class="panel"><h3 class="panel-title">운동 로그</h3><div class="summary-list" id="summaryList"><div class="summary-item">아직 운동 결과가 없습니다.</div></div></section>
+<section class="panel"><h3 class="panel-title">Pressure Sensor Line Plot</h3><div class="line-chart-wrap"><canvas id="pressureChart"></canvas></div><div id="pressureLegend" class="legend-scroll"></div></section>
+<section class="panel"><h3 class="panel-title">EMG Line Plot</h3><div class="line-chart-wrap"><canvas id="emgChart"></canvas></div></section>
+</div>
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal"><h2>재연결 필요</h2><p id="modalText">센서 연결 상태를 확인하세요.</p><button class="primary" onclick="closeModal()">확인</button></div></div>
+<div class="modal-backdrop" id="methodModalBackdrop">
+<div class="modal method-modal">
+<h2>운동 평가 방법</h2>
+<div class="method-content">
+<h3>STEP1. 기기 점검 단계</h3>
+<ul><li>기준값 측정 버튼을 누르면 먼저 3초 동안 센서 연결 상태를 확인합니다.</li><li>일부 센서가 불안정해도 전체 연결 비율이 충분하면 경고만 표시하고 진행합니다.</li><li>아예 연결되지 않은 센서가 많으면 재연결 필요 창을 띄우고 측정을 중단합니다.</li></ul>
+<h3>STEP2. 기준값 측정 단계</h3>
+<ul><li>“발을 올리고 가만히 자세를 유지하세요” 메시지를 표시합니다.</li><li>5초 동안 FSR 압력센서와 EMG 센서값을 수집합니다.</li><li>수집된 값의 평균을 기준값으로 저장하고 화면의 기준값 란에 표시합니다.</li></ul>
+<h3>STEP3. 최대 아치 형성값 측정 단계</h3>
+<ul><li>버튼이 최대 아치 형성값 측정으로 바뀝니다.</li><li>“엄지발가락을 최대한 들어올리세요” 메시지를 표시하고 5초 동안 측정합니다.</li><li>실시간으로 기준값 대비 엄지 압력이 몇 % 감소했는지 보여줍니다.</li><li>통과 조건은 엄지 압력 15% 이상 감소, 5초 동안 압력 변화율 70% 이하, 뒤꿈치 압력 변화 50% 이하입니다.</li></ul>
+<h3>STEP4. MVIC 측정 단계</h3>
+<ul><li>3초씩 총 3회 측정합니다.</li><li>“아치를 유지하면서 엄지발가락으로 바닥을 최대한 강하게 누르세요” 메시지를 표시합니다.</li><li>3회 측정값의 변동계수(CV = 표준편차 / 평균 × 100)가 60%를 초과하면 1회차부터 다시 측정합니다.</li><li>통과하면 MVIC 기준값을 저장하고 운동 시작 단계로 넘어갑니다.</li></ul>
+<h3>STEP5. 숏풋 운동 수행 및 평가 단계</h3>
+<ul><li>운동 시작 버튼을 누르면 측정이 시작되고, 처음 3초 동안은 운동 종료 버튼을 누를 수 없습니다.</li><li>운동 종료를 누르면 운동 구간 전체를 분석합니다.</li><li>아치 유지, 엄지 과보상 억제, 뒤꿈치 안정성, EMG 활성도 4개 항목을 평가합니다.</li></ul>
+<h3>STEP6. 점수 계산 방식</h3>
+<ul><li>아치 유지: 35점</li><li>엄지 과보상 억제: 25점</li><li>뒤꿈치 안정성: 20점</li><li>EMG 활성도: 20점</li><li>각 항목은 운동 중 조건을 만족한 샘플 비율에 가중치를 곱해 계산합니다.</li><li>총점 80점 이상은 Good, 50점 이상은 Normal, 50점 미만은 Bad로 표시합니다.</li></ul>
+<h3>STEP7. 반복 운동 및 전체 종료</h3>
+<ul><li>운동은 원하는 횟수만큼 반복할 수 있고, 매 회차 결과가 카드 형태로 운동 로그에 누적됩니다.</li><li>전체 운동 종료 버튼을 누르면 JSON 요약 파일을 data 폴더에 저장합니다.</li><li>저장 후 버튼은 다시 기준값 측정으로 돌아가며 새 세션을 바로 시작할 수 있습니다.</li></ul>
+</div>
+<button class="primary" onclick="closeMethodModal()">확인</button>
+</div>
+</div>
+<script>
+const socket=io(); const fsrCount=18;
+const groups={toe:[1],arch:[7,8,9],heel:[15,16],front:[1,2,3,4,5,6],middleArch:[7,8,9,10,11,12],rearHeel:[13,14,15,16,17,18]};
+const surfaceGrid={frontLeft:[1,4],frontCenter:[2,5],frontRight:[3,6],midLeft:[7,10],midCenter:[8,11],midRight:[9,12],rearLeft:[13,16],rearCenter:[14,17],rearRight:[15,18]};
+let footFeedbackState={arch_good:false,toe_over:false,heel_unstable:false,emg_low:false};
+const labels=[], emgLabels=[], fsrData={}, emgData=[]; for(let i=1;i<=fsrCount;i++) fsrData[`fsr${i}`]=[];
+const pressureDatasets=[]; for(let i=1;i<=fsrCount;i++) pressureDatasets.push({label:`FSR${i}`,data:fsrData[`fsr${i}`],borderWidth:1,pointRadius:0,tension:.25,hidden:i>6});
+const pressureChart=new Chart(document.getElementById("pressureChart").getContext("2d"),{type:"line",data:{labels,datasets:pressureDatasets},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},interaction:{intersect:false,mode:"index"},scales:{y:{title:{display:true,text:"FSR Voltage"},grid:{color:"#edf1f5"}},x:{grid:{display:false}}}}});
+const emgChart=new Chart(document.getElementById("emgChart").getContext("2d"),{type:"line",data:{labels:emgLabels,datasets:[{label:"EMG",data:emgData,borderWidth:3,pointRadius:0,tension:.25}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:true}},scales:{y:{title:{display:true,text:"EMG Voltage"},grid:{color:"#edf1f5"}},x:{grid:{display:false}}}}});
+buildCustomLegend(); drawSurface3D({});
+function primaryAction(){socket.emit("primary_action");} function finishSession(){socket.emit("end_summary");} function openDataFolder(){window.open("/data","_blank");}
+function setFeedback(t){document.getElementById("feedback").innerText=t;} function setPhase(t){document.getElementById("phaseStatus").innerText=t;} function setMainButton(t){document.getElementById("mainButton").innerText=t;}
+function closeModal(){document.getElementById("modalBackdrop").style.display="none";} function showModal(text){document.getElementById("modalText").innerText=text;document.getElementById("modalBackdrop").style.display="flex";}
+function showMethodModal(){document.getElementById("methodModalBackdrop").style.display="flex";} function closeMethodModal(){document.getElementById("methodModalBackdrop").style.display="none";}
+function pushLimited(a,v){a.push(v); if(a.length>60)a.shift();} function fmt(v){return (v===null||v===undefined||Number.isNaN(Number(v)))?"-":Number(v).toFixed(2);} function pct(v){return (v===null||v===undefined||Number.isNaN(Number(v)))?0:Math.max(0,Math.min(100,(Number(v)/3.3)*100));}
+function groupAverage(data,group){const vals=group.map(i=>data[`fsr${i}_voltage`]).filter(v=>v!==null&&v!==undefined&&!Number.isNaN(Number(v))).map(Number);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;} function surfaceGroupAverage(data,key){return groupAverage(data,surfaceGrid[key]);}
+function updateGroupCard(prefix,value){document.getElementById(`${prefix}Value`).innerText=fmt(value);document.getElementById(`${prefix}Bar`).style.width=`${pct(value)}%`;}
+function averageFromObject(obj){const vals=[]; for(let i=1;i<=fsrCount;i++){const v=obj[`fsr${i}_voltage`]; if(v!==null&&v!==undefined&&!Number.isNaN(Number(v))) vals.push(Number(v));} return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;}
+function stateClass(s){return `status-${s}`;}
+function updateRing(id,value){const el=document.getElementById(id);if(!el)return;const v=Math.max(0,Math.min(100,Number(value)||0));const deg=v*3.6;el.innerText=`${v.toFixed(0)}%`;el.style.background=`conic-gradient(var(--blue) ${deg}deg,#edf1f5 ${deg}deg)`;}
+function updateRings(rings){if(!rings)return;updateRing("ringArch",rings.arch);updateRing("ringToe",rings.toe);updateRing("ringHeel",rings.heel);updateRing("ringEmg",rings.emg);}
+function updateFootFeedbackState(flags){if(!flags)return;footFeedbackState={...footFeedbackState,...flags};}
+socket.on("sensor_data",function(data){pushLimited(labels,data.time||"");pushLimited(emgLabels,data.time||""); for(let i=1;i<=fsrCount;i++)pushLimited(fsrData[`fsr${i}`],data[`fsr${i}_voltage`]??null); pushLimited(emgData,data.emg_voltage??null); updateGroupCard("toe",groupAverage(data,groups.toe)); updateGroupCard("arch",groupAverage(data,groups.arch)); updateGroupCard("heel",groupAverage(data,groups.heel)); updateGroupCard("emg",data.emg_voltage??null); if(data.max_lift_realtime&&data.max_lift_realtime.toe_decrease_percent!==null){setFeedback(`현재 엄지 압력 감소율: ${data.max_lift_realtime.toe_decrease_percent}%`);} drawFootMap(data); drawSurface3D(data); pressureChart.update(); emgChart.update();});
+socket.on("status",r=>setFeedback(r.message)); socket.on("phase",r=>{setPhase(r.label);setMainButton(r.label);}); socket.on("action_state",r=>{document.getElementById("mainButton").disabled=!r.enabled;});
+socket.on("exercise_lock",r=>{const btn=document.getElementById("mainButton"); btn.disabled=true; setTimeout(()=>{btn.disabled=false;},(r.locked_seconds||3)*1000);});
+socket.on("reconnect_required",r=>showModal(`아예 연결되지 않은 센서가 많습니다. 확인 대상: ${(r.disconnected||[]).join(", ")}`));
+socket.on("system_check_result",r=>{if(r.need_reconnect){setFeedback("재연결 필요: "+(r.disconnected||[]).join(", "));}else if((r.disconnected||[]).length||(r.warnings||[]).length){setFeedback("점검 통과. 단, 일부 센서 확인 필요: "+[...(r.disconnected||[]),...(r.warnings||[])].join(", "));}});
+socket.on("baseline_result",r=>{document.getElementById("baselineValue").innerText=`FSR ${fmt(averageFromObject(r))} / EMG ${fmt(r.emg_voltage)}`;});
+socket.on("max_lift_result",r=>{const m=r._metrics||{};document.getElementById("maxLiftValue").innerText=`감소 ${m.toe_decrease_percent??"-"}% / Heel ${m.heel_shift_percent??"-"}%`; if(r._feedback&&r._feedback.length)setFeedback(r._feedback.join(" "));});
+socket.on("mvic_result",r=>{document.getElementById("mvicValue").innerText=`${r.trial_count||0}회 / CV ${r.cv_percent===null||r.cv_percent===undefined?"-":Number(r.cv_percent).toFixed(1)}%`; if(r.feedback&&r.feedback.length)setFeedback(r.feedback.join(" "));});
+socket.on("exercise_result",function(result){
+updateRings(result.rings);
+updateFootFeedbackState(result.feedback_flags);
+document.getElementById("latestScoreDetail").innerText=result.score_detail||"";
+setFeedback(`${result.grade} / ${result.score}점. ${result.main_comment}`);
+const summary=document.getElementById("summaryList"); if(summary.innerText.includes("아직 운동 결과가 없습니다"))summary.innerHTML="";
+const good=(result.good_points&&result.good_points.length)?result.good_points.join("<br>"):"특별히 안정적인 항목이 없습니다.";
+const improve=(result.improve_points&&result.improve_points.length)?result.improve_points.join("<br>"):"큰 개선점 없이 안정적으로 수행했습니다.";
+const box=document.createElement("div"); box.className="exercise-card"; box.innerHTML=`<div class="exercise-card-title">운동 ${result.exercise_index}회차</div><div>Score <b>${result.score}</b> / <span class="${stateClass(result.grade)}">${result.grade}</span></div><div class="score-detail">${result.score_detail||""}</div><br><div><span class="good-text">좋았던 점</span><br>${good}</div><br><div><span class="improve-text">개선점</span><br>${improve}</div>`;
+summary.appendChild(box);
+});
+socket.on("summary_result",function(r){const box=document.createElement("div");box.className="summary-item";box.innerHTML=`<b>전체 운동 종료 요약</b><br>운동 횟수: ${r.total_exercises}<br>평균 점수: ${r.avg_score}점<br>기대 효과: ${r.expected_effect}<br>가장 많이 받은 코멘트: ${r.most_common_comment}<br>${r.comments?r.comments.join("<br>"):""}`;document.getElementById("summaryList").appendChild(box);setFeedback("전체 운동 종료 및 저장 완료. 다시 기준값 측정부터 시작할 수 있습니다.");});
+socket.on("saved",()=>{});
+function drawFootMap(data){
+const c=document.getElementById("footMap"),ctx=c.getContext("2d");
+ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle="#f8fafc";ctx.fillRect(0,0,c.width,c.height);
+ctx.strokeStyle="#d6dee8";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(130,195,82,160,0,0,Math.PI*2);ctx.stroke();
+
+if(footFeedbackState.arch_good){ctx.save();ctx.strokeStyle="rgba(18,184,134,.95)";ctx.lineWidth=6;ctx.shadowColor="rgba(18,184,134,.45)";ctx.shadowBlur=14;ctx.beginPath();ctx.ellipse(130,185,58,72,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+if(footFeedbackState.toe_over){ctx.save();ctx.strokeStyle="rgba(250,82,82,.95)";ctx.lineWidth=6;ctx.shadowColor="rgba(250,82,82,.45)";ctx.shadowBlur=16;ctx.beginPath();ctx.arc(95,48,34,0,Math.PI*2);ctx.stroke();ctx.restore();}
+if(footFeedbackState.heel_unstable){ctx.save();ctx.strokeStyle="rgba(250,82,82,.95)";ctx.lineWidth=6;ctx.shadowColor="rgba(250,82,82,.45)";ctx.shadowBlur=16;ctx.beginPath();ctx.ellipse(130,318,68,54,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+
+const pos=[[95,48],[130,42],[165,48],[80,98],[130,96],[180,98],[75,153],[130,153],[185,153],[80,210],[130,210],[180,210],[88,275],[130,283],[172,275],[105,338],[130,346],[155,338]];
+for(let i=1;i<=18;i++){const v=data[`fsr${i}_voltage`],[x,y]=pos[i-1],intensity=v!==null&&v!==undefined?Math.min(Number(v)/3.3,1):0,r=7+intensity*18;ctx.beginPath();ctx.fillStyle=`rgba(49,130,246,${0.16+intensity*0.84})`;ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.fillStyle="#191f28";ctx.font="11px -apple-system,BlinkMacSystemFont,Segoe UI";ctx.textAlign="center";ctx.fillText(i,x,y+4);}
+}
+function drawSurface3D(data){const z=[[surfaceGroupAverage(data,"frontLeft")??0,surfaceGroupAverage(data,"frontCenter")??0,surfaceGroupAverage(data,"frontRight")??0],[surfaceGroupAverage(data,"midLeft")??0,surfaceGroupAverage(data,"midCenter")??0,surfaceGroupAverage(data,"midRight")??0],[surfaceGroupAverage(data,"rearLeft")??0,surfaceGroupAverage(data,"rearCenter")??0,surfaceGroupAverage(data,"rearRight")??0]];const trace={z:z,x:["Left","Center","Right"],y:["Front","Middle/Arch","Rear/Heel"],type:"surface",showscale:true,colorbar:{title:"V",thickness:12,len:.6},opacity:.96};const layout={margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"#f8fafc",plot_bgcolor:"#f8fafc",scene:{xaxis:{title:"",backgroundcolor:"#f8fafc",gridcolor:"#e5e8eb"},yaxis:{title:"",backgroundcolor:"#f8fafc",gridcolor:"#e5e8eb"},zaxis:{title:"Voltage",range:[0,3.3],backgroundcolor:"#f8fafc",gridcolor:"#e5e8eb"},camera:{eye:{x:1.45,y:1.45,z:.95}}}};Plotly.react("surface3d",[trace],layout,{displayModeBar:false,responsive:true});}
+function buildCustomLegend(){const legend=document.getElementById("pressureLegend");legend.innerHTML="";pressureChart.data.datasets.forEach((dataset,index)=>{const item=document.createElement("div");item.className="legend-chip"+(dataset.hidden?" off":"");item.innerHTML=`<span class="legend-dot"></span><span>${dataset.label}</span>`;item.onclick=()=>{const meta=pressureChart.getDatasetMeta(index);meta.hidden=meta.hidden===null?!pressureChart.data.datasets[index].hidden:null;pressureChart.data.datasets[index].hidden=!pressureChart.isDatasetVisible(index);item.classList.toggle("off");pressureChart.update();};legend.appendChild(item);});}
+</script>
+</body>
+</html>
