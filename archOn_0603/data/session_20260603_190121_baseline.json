@@ -1,0 +1,49 @@
+{
+    "fsr1_voltage": -0.015040000000000001,
+    "fsr2_voltage": -0.01242,
+    "fsr3_voltage": -0.01688,
+    "fsr4_voltage": -0.016139999999999998,
+    "fsr5_voltage": 0.00434,
+    "fsr6_voltage": -0.01704,
+    "fsr7_voltage": -0.02054,
+    "fsr8_voltage": 0.03882,
+    "fsr9_voltage": -0.02012,
+    "fsr10_voltage": -0.02042,
+    "fsr11_voltage": 0.19358,
+    "fsr12_voltage": -0.018319999999999996,
+    "fsr13_voltage": -0.00916,
+    "fsr14_voltage": 0.17936000000000002,
+    "fsr15_voltage": 0.005540000000000001,
+    "fsr16_voltage": -0.00864,
+    "fsr17_voltage": -0.0086,
+    "fsr18_voltage": -0.008979999999999998,
+    "emg_rms": 2048.0,
+    "toe_mean": -0.015040000000000001,
+    "arch_mean": 0.04786,
+    "heel_mean": -0.0015499999999999997,
+    "arch_eval_sum": 0.19144,
+    "fsr_total_mean": 0.012741111111111113,
+    "_ok": true,
+    "_feedback": [
+        "기준값 저장 완료"
+    ],
+    "_calibration_log": {
+        "current": {},
+        "baseline": {
+            "toe_mean": -0.015,
+            "arch_mean": 0.0479,
+            "heel_mean": -0.0015,
+            "emg_rms": 2048.0
+        },
+        "max_lift": {
+            "emg_max": null,
+            "emg_rms": null
+        },
+        "mvic": {
+            "toe_mean": null,
+            "emg_rms": null,
+            "cv_percent": null
+        },
+        "comparisons": {}
+    }
+}

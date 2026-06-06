@@ -1,0 +1,42 @@
+{
+    "emg_rms": 2048.0,
+    "emg_max": 2048.0,
+    "emg_mean": 2048.0,
+    "arch_eval_sum": 0.1891,
+    "arch_eval_mean": 0.19148,
+    "arch_eval_sensors": [
+        7,
+        8,
+        10,
+        11
+    ],
+    "_ok": true,
+    "_feedback": [
+        "최대 아치 형성값 저장 완료: EMG 2048.0000, 아치 압력합 M 0.1891"
+    ],
+    "_metrics": {
+        "emg_max": 2048.0,
+        "emg_mean": 2048.0,
+        "arch_eval_sum": 0.1891,
+        "arch_eval_mean": 0.1915
+    },
+    "_calibration_log": {
+        "current": {},
+        "baseline": {
+            "toe_mean": -0.015,
+            "arch_mean": 0.0479,
+            "heel_mean": -0.0015,
+            "emg_rms": 2048.0
+        },
+        "max_lift": {
+            "emg_max": 2048.0,
+            "emg_rms": 2048.0
+        },
+        "mvic": {
+            "toe_mean": null,
+            "emg_rms": null,
+            "cv_percent": null
+        },
+        "comparisons": {}
+    }
+}
